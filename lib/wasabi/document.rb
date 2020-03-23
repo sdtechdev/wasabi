@@ -105,7 +105,7 @@ module Wasabi
           namespaces << [[type], info[:namespace]]
 
           element_keys(info).each do |field|
-            namespaces << [[type, field], info[:namespace]]
+            namespaces << [[type, field], info.dig(field, :namespace) || info[:namespace]]
           end
         end if document
 
