@@ -160,17 +160,31 @@ module Wasabi
 
     def parse_types
       schemas.each do |schema|
-        schema.element_children.each do |node|
+        parse_schema(schema)
+      end
+    end
 
-          case node.name
-          when 'element'
-            complex_type = node.at_xpath('./xs:complexType', 'xs' => XSD)
-            process_type schema, complex_type, node['name'].to_s if complex_type
-          when 'complexType'
-            process_type schema, node, node['name'].to_s
-          end
+    def parse_schema(schema)
+      schema.element_children.each do |node|
+        case node.name
+        when 'import'
+          url = node.attribute('schemaLocation')
+          process_import url
+        when 'element'
+          complex_type = node.at_xpath('./xs:complexType', 'xs' => XSD)
+          process_type schema, complex_type, node['name'].to_s if complex_type
+        when 'complexType'
+          process_type schema, node, node['name'].to_s
         end
       end
+    end
+
+    def process_import(url)
+      xml = Resolver.new(url).resolve
+      document = Nokogiri::XML(xml)
+
+      parse_schema(document.root)
+    rescue StandardError
     end
 
     def process_type(schema, type, name)
